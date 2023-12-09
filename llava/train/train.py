@@ -48,6 +48,7 @@ def rank0_print(*args):
 @dataclass
 class ModelArguments:
     model_name_or_path: Optional[str] = field(default="facebook/opt-125m")
+    tokenizer_name_or_path: Optional[str] = field(default=None)
     version: Optional[str] = field(default="v0")
     freeze_backbone: bool = field(default=False)
     tune_mm_mlp_adapter: bool = field(default=False)
@@ -791,6 +792,12 @@ def train():
                 cache_dir=training_args.cache_dir,
                 **bnb_model_from_pretrained_args
             )
+        elif 'mamba' in model_args.model_name_or_path:
+            model = LlavaMambaForCausalLM.from_pretrained(
+                model_args.model_name_or_path,
+                cache_dir=training_args.cache_dir,
+                # **bnb_model_from_pretrained_args
+            )
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
@@ -845,6 +852,13 @@ def train():
             cache_dir=training_args.cache_dir,
             model_max_length=training_args.model_max_length,
             padding_side="right"
+        )
+    elif 'mamba' in model_args.model_name_or_path:
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            model_args.tokenizer_name_or_path,
+            cache_dir=training_args.cache_dir,
+            model_max_length=training_args.model_max_length,
+            padding_side="right",
         )
     else:
         tokenizer = transformers.AutoTokenizer.from_pretrained(
