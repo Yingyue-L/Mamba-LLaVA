@@ -18,7 +18,7 @@ Please download the 558K subset of the LAION-CC-SBU dataset with BLIP captions w
 
 Pretrain takes around 11 hours for Mamba-2.8B-LLaVA-v1.5 on 4x 3090 (24G).
 
-Training script with DeepSpeed ZeRO-2: [`pretrain.sh`](./scripts/mamba/pretrain.sh).
+Training script without DeepSpeed and bf16: [`pretrain_fp32.sh`](./scripts/mamba/pretrain_fp32.sh).
 
 - `--mm_projector_type mlp2x_gelu`: the two-layer MLP vision-language connector.
 - `--vision_tower openai/clip-vit-large-patch14-336`: CLIP ViT-L/14 336px.

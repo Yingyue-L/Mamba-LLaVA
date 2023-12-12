@@ -46,8 +46,6 @@ class MambaConfig(LlamaConfig):
     initializer_cfg: Optional[dict] = None
     residual_in_fp32: bool = False
     fused_add_norm: bool = False
-    device: str = "cuda"
-    dtype: torch.dtype = torch.float16
 
 
 class LlavaConfig(MambaConfig):
@@ -57,8 +55,10 @@ class LlavaConfig(MambaConfig):
 class MambaModel(PreTrainedModel):
     def __init__(
         self, config: MambaConfig,
+        device=None,
+        dtype=None,
     ) -> None:
-        factory_kwargs = {"device": config.device, "dtype": config.dtype}
+        factory_kwargs = {"device": device, "dtype": dtype}
         super().__init__(config)
         self.residual_in_fp32 = config.residual_in_fp32
 
@@ -139,8 +139,9 @@ class MambaModel(PreTrainedModel):
 class LlavaMambaModel(LlavaMetaModel, MambaModel):
     config_class = LlavaConfig
 
-    def __init__(self, config):
-         super().__init__(config)
+    def __init__(self, config, **factory_kwargs):
+        LlavaMetaModel.__init__(self, config)
+        MambaModel.__init__(self, config, **factory_kwargs)
 
 
 class LlavaMambaForCausalLM(PreTrainedModel, LlavaMetaForCausalLM):
@@ -148,14 +149,16 @@ class LlavaMambaForCausalLM(PreTrainedModel, LlavaMetaForCausalLM):
     def __init__(
         self,
         config: LlavaConfig,
+        device=None,
+        dtype=None,
     ) -> None:
-        factory_kwargs = {"device": config.device, "dtype": config.dtype}
+        factory_kwargs = {"device": device, "dtype": dtype}
         config.hidden_size = config.d_model
         PreTrainedModel.__init__(self, config)
         if config.vocab_size % config.pad_vocab_size_multiple != 0:
             config.vocab_size += config.pad_vocab_size_multiple - (config.vocab_size % config.pad_vocab_size_multiple)
         
-        self.model = LlavaMambaModel(config)
+        self.model = LlavaMambaModel(config, **factory_kwargs)
         self.pretraining_tp = config.pretraining_tp
         self.lm_head = nn.Linear(config.d_model, config.vocab_size, bias=False, **factory_kwargs)
 
@@ -178,8 +181,8 @@ class LlavaMambaForCausalLM(PreTrainedModel, LlavaMetaForCausalLM):
     @classmethod
     def from_pretrained(cls, pretrained_model_name, device=None, dtype=None, **kwargs):
         config = load_config_hf(pretrained_model_name)
-        config = MambaConfig(**config, device=device, dtype=dtype, **kwargs)
-        model = cls(config)
+        config = MambaConfig(**config)
+        model = cls(config, device=device, dtype=dtype, **kwargs)
         state_dict = load_state_dict_hf(pretrained_model_name, device=device, dtype=dtype)
         keys = list(state_dict.keys())
         for key in keys:

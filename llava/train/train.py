@@ -795,8 +795,8 @@ def train():
         elif 'mamba' in model_args.model_name_or_path:
             model = LlavaMambaForCausalLM.from_pretrained(
                 model_args.model_name_or_path,
-                cache_dir=training_args.cache_dir,
-                # **bnb_model_from_pretrained_args
+                dtype=torch.float32,
+                device=training_args.device,
             )
         else:
             model = LlavaLlamaForCausalLM.from_pretrained(
