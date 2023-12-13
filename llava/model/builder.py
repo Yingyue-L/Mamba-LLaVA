@@ -89,6 +89,10 @@ def load_pretrained_model(model_path, model_base, model_name, load_8bit=False, l
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=True)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path, trust_remote_code=True)
                 model = LlavaMPTForCausalLM.from_pretrained(model_base, low_cpu_mem_usage=True, config=cfg_pretrained, **kwargs)
+            elif "mamba" in model_name.lower():
+                tokenizer = AutoTokenizer.from_pretrained("/data/yingyueli/hub/gpt-neox-20b")
+                cfg_pretrained = AutoConfig.from_pretrained(model_path)
+                model = LlavaMambaForCausalLM.from_pretrained(model_base, dtype=torch.float16, config=cfg_pretrained, device=device)
             else:
                 tokenizer = AutoTokenizer.from_pretrained(model_base, use_fast=False)
                 cfg_pretrained = AutoConfig.from_pretrained(model_path)
